@@ -24,4 +24,3 @@ ic-cdk = { workspace = true }
 pocket-ic = { workspace = true, optional = true }
 serde = { workspace = true }
 thiserror = { workspace = true }
-url = { workspace = true }
