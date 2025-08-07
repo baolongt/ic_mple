@@ -12,6 +12,9 @@ use crate::CanisterClientResult;
 /// The IC Agent is used for interaction through the dfx tool, while the IC
 /// Canister is used for interacting with the EVM canister in wasm environments.
 pub trait CanisterClient: Send + Clone {
+    #[cfg(feature = "pocket-ic")]
+    type MessageId: Send + Sync;
+
     /// Call an update method on the canister.
     ///
     /// # Arguments
@@ -48,5 +51,45 @@ pub trait CanisterClient: Send + Clone {
     ) -> impl Future<Output = CanisterClientResult<R>> + Send
     where
         T: ArgumentEncoder + Send + Sync,
+        R: DeserializeOwned + CandidType + Send;
+
+    /// Submit an asynchronous call to the canister.
+    ///
+    /// This method is only available when the `pocket-ic` feature is enabled.
+    ///
+    /// # Arguments
+    ///
+    /// * `method` - The method name.
+    /// * `args` - The arguments to the method.
+    ///
+    /// # Returns
+    ///
+    /// A message ID that can be used to await the result.
+    #[cfg(feature = "pocket-ic")]
+    fn submit_call<T>(
+        &self,
+        method: &str,
+        args: T,
+    ) -> impl Future<Output = CanisterClientResult<Self::MessageId>> + Send
+    where
+        T: ArgumentEncoder + Send + Sync;
+
+    /// Await the result of a previously submitted call.
+    ///
+    /// This method is only available when the `pocket-ic` feature is enabled.
+    ///
+    /// # Arguments
+    ///
+    /// * `msg_id` - The message ID returned by submit_call.
+    ///
+    /// # Returns
+    ///
+    /// The result of the method call.
+    #[cfg(feature = "pocket-ic")]
+    fn await_call<R>(
+        &self,
+        msg_id: Self::MessageId,
+    ) -> impl Future<Output = CanisterClientResult<R>> + Send
+    where
         R: DeserializeOwned + CandidType + Send;
 }
