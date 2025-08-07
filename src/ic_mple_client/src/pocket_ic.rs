@@ -43,6 +43,13 @@ impl PocketIcClient {
             .expect("PocketIC client is not available")
     }
 
+    pub fn client_mut(&mut self) -> &mut PocketIc {
+        self.client
+            .as_mut()
+            .and_then(|arc| Arc::get_mut(arc))
+            .expect("PocketIC client is not available")
+    }
+
     /// Performs update call with the given arguments.
     pub async fn update<T, R>(&self, method: &str, args: T) -> CanisterClientResult<R>
     where
@@ -116,28 +123,5 @@ impl CanisterClient for PocketIcClient {
         R: DeserializeOwned + CandidType + Send,
     {
         PocketIcClient::query(self, method, args).await
-    }
-
-    #[cfg(feature = "pocket-ic")]
-    fn submit_call<T>(
-        &self,
-        method: &str,
-        args: T,
-    ) -> impl Future<Output = CanisterClientResult<RawMessageId>> + Send
-    where
-        T: ArgumentEncoder + Send + Sync,
-    {
-        PocketIcClient::submit_call(self, method, args)
-    }
-
-    #[cfg(feature = "pocket-ic")]
-    fn await_call<R>(
-        &self,
-        msg_id: RawMessageId,
-    ) -> impl Future<Output = CanisterClientResult<R>> + Send
-    where
-        R: DeserializeOwned + CandidType + Send,
-    {
-        PocketIcClient::await_call(self, msg_id)
     }
 }
