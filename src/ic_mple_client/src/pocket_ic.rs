@@ -102,8 +102,6 @@ impl PocketIcClient {
 }
 
 impl CanisterClient for PocketIcClient {
-    type MessageId = RawMessageId;
-
     async fn update<T, R>(&self, method: &str, args: T) -> CanisterClientResult<R>
     where
         T: ArgumentEncoder + Send + Sync,
@@ -121,18 +119,25 @@ impl CanisterClient for PocketIcClient {
     }
 
     #[cfg(feature = "pocket-ic")]
-    async fn submit_call<T>(&self, method: &str, args: T) -> CanisterClientResult<Self::MessageId>
+    fn submit_call<T>(
+        &self,
+        method: &str,
+        args: T,
+    ) -> impl Future<Output = CanisterClientResult<RawMessageId>> + Send
     where
         T: ArgumentEncoder + Send + Sync,
     {
-        PocketIcClient::submit_call(self, method, args).await
+        PocketIcClient::submit_call(self, method, args)
     }
 
     #[cfg(feature = "pocket-ic")]
-    async fn await_call<R>(&self, msg_id: Self::MessageId) -> CanisterClientResult<R>
+    fn await_call<R>(
+        &self,
+        msg_id: RawMessageId,
+    ) -> impl Future<Output = CanisterClientResult<R>> + Send
     where
         R: DeserializeOwned + CandidType + Send,
     {
-        PocketIcClient::await_call(self, msg_id).await
+        PocketIcClient::await_call(self, msg_id)
     }
 }

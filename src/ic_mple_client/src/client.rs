@@ -12,9 +12,6 @@ use crate::CanisterClientResult;
 /// The IC Agent is used for interaction through the dfx tool, while the IC
 /// Canister is used for interacting with the EVM canister in wasm environments.
 pub trait CanisterClient: Send + Clone {
-    #[cfg(feature = "pocket-ic")]
-    type MessageId: Send + Sync;
-
     /// Call an update method on the canister.
     ///
     /// # Arguments
@@ -70,9 +67,17 @@ pub trait CanisterClient: Send + Clone {
         &self,
         method: &str,
         args: T,
-    ) -> impl Future<Output = CanisterClientResult<Self::MessageId>> + Send
+    ) -> impl Future<Output = CanisterClientResult<pocket_ic::common::rest::RawMessageId>> + Send
     where
-        T: ArgumentEncoder + Send + Sync;
+        T: ArgumentEncoder + Send + Sync,
+    {
+        async move {
+            let _ = (method, args);
+            Err(crate::CanisterClientError::CandidError(candid::Error::msg(
+                "submit_call not supported by this client implementation",
+            )))
+        }
+    }
 
     /// Await the result of a previously submitted call.
     ///
@@ -88,8 +93,16 @@ pub trait CanisterClient: Send + Clone {
     #[cfg(feature = "pocket-ic")]
     fn await_call<R>(
         &self,
-        msg_id: Self::MessageId,
+        msg_id: pocket_ic::common::rest::RawMessageId,
     ) -> impl Future<Output = CanisterClientResult<R>> + Send
     where
-        R: DeserializeOwned + CandidType + Send;
+        R: DeserializeOwned + CandidType + Send,
+    {
+        async move {
+            let _ = msg_id;
+            Err(crate::CanisterClientError::CandidError(candid::Error::msg(
+                "await_call not supported by this client implementation",
+            )))
+        }
+    }
 }
